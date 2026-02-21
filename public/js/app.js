@@ -168,6 +168,9 @@ document.addEventListener('click', async (e) => {
     e.preventDefault();
     try { await api('/auth/logout', { method: 'POST' }); } catch {}
     currentUser = null;
+    // Clear toast on logout to prevent stale messages
+    const t = document.getElementById('toast');
+    if (t) t.classList.remove('toast--visible');
     navigate('/login');
   }
 });
