@@ -110,6 +110,10 @@ function renderLogin() {
   $('#loginForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = e.target;
+    const btn = f.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Logging in...';
     try {
       const data = await api('/auth/login', {
         method: 'POST',
@@ -121,6 +125,8 @@ function renderLogin() {
       const el = $('#authError');
       el.textContent = err.message;
       el.style.display = '';
+      btn.disabled = false;
+      btn.textContent = originalText;
     }
   };
 }
@@ -151,6 +157,10 @@ function renderRegister() {
   $('#registerForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = e.target;
+    const btn = f.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
     try {
       const data = await api('/auth/register', {
         method: 'POST',
@@ -167,6 +177,8 @@ function renderRegister() {
       const el = $('#authError');
       el.textContent = err.message;
       el.style.display = '';
+      btn.disabled = false;
+      btn.textContent = originalText;
     }
   };
 }
