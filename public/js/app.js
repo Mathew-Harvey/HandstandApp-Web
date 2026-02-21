@@ -29,12 +29,91 @@ async function api(path, opts = {}) {
 // ===== ROUTING =====
 function navigate(path) { window.location.hash = '#' + path; }
 
+function getSetPasswordTokenFromUrl() {
+  if (window.location.pathname !== '/set-password') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('token') || params.get('set_password_token') || null;
+}
+
+// Set-password flow (email link): GET validate (with credentials → session cookie), then show form; POST on submit (with credentials), then redirect.
+async function handleSetPasswordFlow() {
+  const token = getSetPasswordTokenFromUrl();
+  if (!token) {
+    navigate('/login');
+    return;
+  }
+  nav.style.display = 'none';
+  app.innerHTML = '<div class="auth-page"><div class="auth-card"><p class="auth-sub">Checking link…</p></div></div>';
+  try {
+    // GET with credentials so the backend can set the session cookie
+    const data = await api(`/auth/validate-set-password-token?token=${encodeURIComponent(token)}`);
+    if (!data || !data.user) {
+      app.innerHTML = `<div class="auth-page"><div class="auth-card"><div class="alert alert-error">This link is invalid or has expired.</div><p class="auth-footer auth-footer-links"><a href="#/login">Back to log in</a> · <a href="#/forgot-password">Forgot password?</a></p></div></div>`;
+      return;
+    }
+    currentUser = data.user;
+    showSetPasswordModal(token);
+  } catch (err) {
+    app.innerHTML = `<div class="auth-page"><div class="auth-card"><div class="alert alert-error">${esc(err.message)}</div><p class="auth-footer auth-footer-links"><a href="#/login">Back to log in</a> · <a href="#/forgot-password">Forgot password?</a></p></div></div>`;
+  }
+}
+
+function showSetPasswordModal(token) {
+  const modal = $('#setPasswordModal');
+  const errEl = $('#setPasswordError');
+  const form = $('#setPasswordForm');
+  if (!modal || !form) return;
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  form.newPassword.value = '';
+  form.confirmNewPassword.value = '';
+  modal.setAttribute('aria-hidden', 'false');
+  modal.classList.add('modal-overlay--visible');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const newPassword = form.newPassword.value;
+    const confirmNewPassword = form.confirmNewPassword.value;
+    if (newPassword !== confirmNewPassword) {
+      if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = ''; }
+      return;
+    }
+    if (newPassword.length < 6) {
+      if (errEl) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = ''; }
+      return;
+    }
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    if (errEl) errEl.style.display = 'none';
+    try {
+      // POST with credentials; then redirect into the app
+      await api('/auth/set-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword }),
+      });
+      closeSetPasswordModal();
+      window.history.replaceState(null, '', window.location.origin + '/');
+      navigate('/dashboard');
+      toast('Password set. Welcome!', true);
+    } catch (err) {
+      if (errEl) { errEl.textContent = err.message || 'Failed to set password.'; errEl.style.display = ''; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Set password & continue'; }
+    }
+  };
+}
+
+function closeSetPasswordModal() {
+  const modal = $('#setPasswordModal');
+  if (modal) {
+    modal.classList.remove('modal-overlay--visible');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
 async function router() {
   const hash = window.location.hash.slice(1) || '/';
   const [path, query] = hash.split('?');
 
   // Check auth on every navigation
-  if (!currentUser && !['/login', '/register'].includes(path)) {
+  if (!currentUser && !['/login', '/register', '/forgot-password'].includes(path)) {
     try {
       const me = await api('/auth/me');
       if (me?.authenticated) {
@@ -50,7 +129,7 @@ async function router() {
   }
 
   // Load levels if not cached (skip on auth pages — requires login)
-  if (!['/login', '/register'].includes(path) && !LEVELS.length) {
+  if (!['/login', '/register', '/forgot-password'].includes(path) && !LEVELS.length) {
     try {
       const data = await api('/levels');
       if (Array.isArray(data)) LEVELS = data;
@@ -66,6 +145,7 @@ async function router() {
   // Route
   if (path === '/login') return renderLogin();
   if (path === '/register') return renderRegister();
+  if (path === '/forgot-password') return renderForgotPassword();
   if (path === '/dashboard') return renderDashboard();
   if (path.startsWith('/level/')) return renderLevel(parseInt(path.split('/')[2]));
 
@@ -74,7 +154,13 @@ async function router() {
 }
 
 window.addEventListener('hashchange', router);
-window.addEventListener('DOMContentLoaded', router);
+window.addEventListener('DOMContentLoaded', async () => {
+  if (getSetPasswordTokenFromUrl()) {
+    await handleSetPasswordFlow();
+    return;
+  }
+  router();
+});
 
 // Logout
 document.addEventListener('click', async (e) => {
@@ -104,7 +190,10 @@ function renderLogin() {
           <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
           <button type="submit" class="btn btn-primary btn-full">Log In</button>
         </form>
-        <p class="auth-footer">Don't have an account? <a href="#/register">Sign up</a></p>
+        <p class="auth-footer auth-footer-links">
+          <a href="#/forgot-password">Forgot password?</a><br>
+          Don't have an account? <a href="#/register">Sign up</a>
+        </p>
       </div>
     </div>`;
   $('#loginForm').onsubmit = async (e) => {
@@ -179,6 +268,59 @@ function renderRegister() {
       el.style.display = '';
       btn.disabled = false;
       btn.textContent = originalText;
+    }
+  };
+}
+
+function renderForgotPassword() {
+  nav.style.display = 'none';
+  app.innerHTML = `
+    <div class="auth-page">
+      <div class="auth-card">
+        <div class="auth-brand">The <span>Bodyweight</span> Gym</div>
+        <h1>Reset password</h1>
+        <p class="auth-sub">Enter your email and we'll send you a link to set a new password.</p>
+        <div class="alert alert-error" id="authError" style="display:none"></div>
+        <div class="alert alert-success" id="authSuccess" style="display:none"></div>
+        <div class="auth-dev-reset" id="authDevReset" style="display:none"></div>
+        <form class="auth-form" id="forgotPasswordForm">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
+          <button type="submit" class="btn btn-primary btn-full">Send reset link</button>
+        </form>
+        <p class="auth-footer"><a href="#/login">Back to log in</a></p>
+      </div>
+    </div>`;
+  $('#forgotPasswordForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const btn = f.querySelector('button[type="submit"]');
+    const errEl = $('#authError');
+    const successEl = $('#authSuccess');
+    const devResetEl = $('#authDevReset');
+    if (errEl) errEl.style.display = 'none';
+    if (successEl) successEl.style.display = 'none';
+    if (devResetEl) { devResetEl.style.display = 'none'; devResetEl.innerHTML = ''; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+      const data = await api('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email: f.email.value.trim() }),
+      });
+      if (successEl) {
+        successEl.textContent = "If an account exists for that email, we've sent you a link to set a new password. Check your inbox and spam folder.";
+        successEl.style.display = '';
+      }
+      if (data && data.devResetToken && devResetEl) {
+        const origin = window.location.origin;
+        const resetUrl = `${origin}/set-password?token=${encodeURIComponent(data.devResetToken)}`;
+        devResetEl.innerHTML = `<strong>Development:</strong> No email sent. Use this link to set your password: <a href="${esc(resetUrl)}">Set password</a>`;
+        devResetEl.style.display = '';
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Send reset link'; }
+    } catch (err) {
+      if (errEl) { errEl.textContent = err.message || 'Something went wrong.'; errEl.style.display = ''; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Send reset link'; }
     }
   };
 }

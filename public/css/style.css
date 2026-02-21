@@ -103,6 +103,10 @@ img { max-width: 100%; display: block; }
 .auth-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .auth-form button { margin-top: 0.75rem; }
 .auth-footer { text-align: center; font-size: 0.85rem; color: var(--sub); margin-top: 1.25rem; }
+.auth-footer-links { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
+.auth-footer-links a { margin: 0 0.15rem; }
+.auth-dev-reset { margin-top: 0.75rem; padding: 0.65rem 0.85rem; border-radius: var(--radius); font-size: 0.8rem; color: var(--sub); background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.15); }
+.auth-dev-reset a { color: var(--accent); }
 
 /* ===== ALERTS ===== */
 .alert { padding: 0.65rem 0.85rem; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.75rem; }
@@ -295,6 +299,28 @@ img { max-width: 100%; display: block; }
 }
 .toast.toast--visible { transform: translateX(-50%) translateY(0); }
 .toast.toast--success { border-color: var(--success); }
+
+/* ===== SET PASSWORD MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+.modal-overlay--visible { opacity: 1; visibility: visible; }
+.modal-overlay .modal-card {
+  width: 100%; max-width: 380px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-overlay .modal-title { font-size: 1.25rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
+.modal-overlay .auth-sub { margin-bottom: 1rem; }
 
 /* ===== RESPONSIVE ===== */
 @media (min-width: 640px) {

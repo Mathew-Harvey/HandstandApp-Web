@@ -18,6 +18,21 @@
 </nav>
 <main class="main" id="app"></main>
 <div class="toast" id="toast"></div>
+<div class="modal-overlay" id="setPasswordModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="auth-brand">The <span>Bodyweight</span> Gym</div>
+    <h2 class="modal-title">Set your password</h2>
+    <p class="auth-sub">Choose a new password to sign in.</p>
+    <div class="alert alert-error" id="setPasswordError" style="display:none"></div>
+    <form class="auth-form" id="setPasswordForm">
+      <label for="newPassword">New password</label>
+      <input type="password" id="newPassword" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+      <label for="confirmNewPassword">Confirm password</label>
+      <input type="password" id="confirmNewPassword" name="confirmNewPassword" required minlength="6" autocomplete="new-password" placeholder="••••••••">
+      <button type="submit" class="btn btn-primary btn-full">Set password &amp; continue</button>
+    </form>
+  </div>
+</div>
 <script>
   // Set your API URL here — change for production
   window.API_URL = window.location.hostname === 'localhost'
