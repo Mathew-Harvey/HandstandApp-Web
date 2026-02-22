@@ -1859,6 +1859,25 @@ a { color: var(--link); }
       showToast('ePub library failed to load — please refresh and try again.', 4000);
       return;
     }
+    showToast('Loading images…', 5000);
+    
+    // Preload all images first
+    var allImgEls = document.querySelectorAll('#content-area img');
+    var preloadPromises = [];
+    for (var i = 0; i < allImgEls.length; i++) {
+      (function(img) {
+        if (img.src && img.src.startsWith('/')) {
+          preloadPromises.push(new Promise(function(resolve) {
+            var i2 = new Image();
+            i2.onload = function() { resolve(); };
+            i2.onerror = function() { resolve(); };
+            i2.src = img.src;
+          }));
+        }
+      })(allImgEls[i]);
+    }
+    await Promise.all(preloadPromises);
+    
     showToast('Generating ePub — this may take a moment…', 15000);
 
     try {
