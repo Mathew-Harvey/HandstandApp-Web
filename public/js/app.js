@@ -184,6 +184,7 @@ async function router() {
   if (path === '/register') return renderRegister();
   if (path === '/forgot-password') return renderForgotPassword();
   if (path === '/dashboard') return renderDashboard();
+  if (path === '/ebook') return renderEbook();
   if (path === '/settings') return renderSettings();
   if (path.startsWith('/level/')) return renderLevel(parseInt(path.split('/')[2]));
 
@@ -368,6 +369,76 @@ function renderForgotPassword() {
   };
 }
 
+// ===== EBOOK =====
+function getEbookUrl(sessionId) {
+  const base = window.location.origin + '/assets/ebook.html';
+  const params = new URLSearchParams();
+  if (sessionId) params.set('session_id', sessionId);
+  params.set('api_url', window.API_URL || '');
+  return base + '?' + params.toString();
+}
+
+async function openEbook() {
+  let sessionId = null;
+  try {
+    const data = await api('/ebook-token');
+    if (data && data.session_id) sessionId = data.session_id;
+  } catch (_) { /* backend may not have ebook-token yet */ }
+  const url = getEbookUrl(sessionId);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  toast('Opening your training guide…', true);
+}
+
+function renderEbook() {
+  app.innerHTML = `
+    <div class="container">
+      <div class="page-header">
+        <a href="#/dashboard" class="back-link">← Dashboard</a>
+        <h1>Training Guide</h1>
+        <p class="auth-sub">The Handstand — The Complete Training Guide</p>
+      </div>
+      <div class="ebook-hero">
+        <div class="ebook-hero-cover">
+          <img src="/images/freestandinghandstand1.png" alt="" class="ebook-cover-img">
+        </div>
+        <div class="ebook-hero-body">
+          <h2 class="ebook-title">From Zero to 60-Second Freestanding Hold</h2>
+          <p class="ebook-desc">Your complete programme lives in the guide: levels 1–6, exercises, progressions, and graduation tests. Read it online anytime or download for offline use.</p>
+          <div class="ebook-actions">
+            <button type="button" class="btn btn-primary btn-full ebook-btn-primary" id="ebookViewBtn">
+              <span class="ebook-btn-icon">📖</span> View &amp; read online
+            </button>
+            <p class="ebook-download-hint">PDF and ePub downloads are available inside the reader (tap the download icon in the toolbar).</p>
+          </div>
+        </div>
+      </div>
+      <div class="ebook-features">
+        <div class="ebook-feature">
+          <span class="ebook-feature-icon">📑</span>
+          <div>
+            <strong>Table of contents</strong>
+            <span>Jump to any chapter from the sidebar.</span>
+          </div>
+        </div>
+        <div class="ebook-feature">
+          <span class="ebook-feature-icon">🌙</span>
+          <div>
+            <strong>Light, sepia &amp; dark</strong>
+            <span>Choose a theme that suits you.</span>
+          </div>
+        </div>
+        <div class="ebook-feature">
+          <span class="ebook-feature-icon">⬇️</span>
+          <div>
+            <strong>Download anytime</strong>
+            <span>Export as PDF (print) or ePub for Apple Books, Kindle, Kobo.</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  $('#ebookViewBtn').addEventListener('click', openEbook);
+}
+
 async function renderDashboard() {
   app.innerHTML = '<div class="container"><p class="auth-sub">Loading…</p></div>';
   try {
@@ -421,6 +492,16 @@ async function renderDashboard() {
               </a>`;
           }).join('')}
         </div>
+        <section class="ebook-dashboard-card">
+          <a href="#/ebook" class="ebook-dashboard-link">
+            <div class="ebook-dashboard-icon">📖</div>
+            <div class="ebook-dashboard-body">
+              <div class="ebook-dashboard-title">Your Training Guide</div>
+              <div class="ebook-dashboard-sub">View &amp; download the complete Handstand guide anytime</div>
+            </div>
+            <span class="ebook-dashboard-arrow">›</span>
+          </a>
+        </section>
         ${recentLogs.length ? `
           <h2 class="section-heading">Recent Activity</h2>
           <div class="activity-list">
