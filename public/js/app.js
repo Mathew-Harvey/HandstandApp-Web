@@ -9,6 +9,33 @@ const nav = $('#nav');
 let LEVELS = [];
 let currentUser = null;
 
+// Exercise key (normalized: no underscores, no trailing digits) → image filenames in /images/
+// Aligned with "The handstand - complete training guide" and assets/images
+const EXERCISE_IMAGES = {
+  wristheelraises: ['wrist01.png', 'writs02.png', 'wrist03.png'],
+  finpushups: ['wrist01.png', 'writs02.png', 'wrist03.png'],
+  deskstretchexternalrotation: ['overheaddeskstretch01.png'],
+  overheaddeskstretch: ['overheaddeskstretch01.png', 'overheaddeskstretch02.png'],
+  hang: ['hang.png'],
+  plank: ['protractedplank.png', 'protractedplankbeginer.png'],
+  bodylinedrill: ['protractedplank.png', 'protractedplankbeginer.png'],
+  chesttowallhandstand: ['chesttowallhandstand01.png', 'chesttowallhandstand02.png'],
+  hollowbody: ['hollowbodyBeginner.png', 'hollowbodyAdv.png'],
+  heelpulls: ['handstandheelpulls01.png', 'handstandheelpulls02.png'],
+  toepulls: ['handstandtoepulls01.png', 'handstandtoepull02.png', 'handstandtoepull03.png'],
+  boxassistedbalance: ['boxassistedhandstand01.png', 'boxassistedhandstand02.png', 'boxassistedhandstand03.png'],
+  balancegame: ['boxassistedhandstand01.png', 'boxassistedhandstand02.png'],
+  kickup: ['handstandkickup01.png', 'handstandkickup02.png', 'handstandkickup03.png', 'handstandkickup04.png'],
+  handstandshouldertap: ['wallhandstandshouldertap01.png', 'wallhandstandshouldertap02.png'],
+  freestandinghandstand: ['freestandinghandstand1.png'],
+  handstand: ['handstand01.png'],
+};
+function getExerciseImages(key) {
+  if (!key) return [];
+  const n = String(key).toLowerCase().replace(/_/g, '').replace(/\d+$/, '');
+  return EXERCISE_IMAGES[n] || [];
+}
+
 // ===== API HELPER =====
 async function api(path, opts = {}) {
   const res = await fetch(`${window.API_URL}/api${path}`, {
@@ -334,18 +361,21 @@ async function renderDashboard() {
     currentUser = user;
 
     const levelMeta = [
-      { num:1, title:'Building the Foundation', sub:'Wrists · Shoulders · Core' },
-      { num:2, title:'Going Upside Down', sub:'Chest-to-wall · Hollow body' },
-      { num:3, title:'Learning to Balance', sub:'Heel pulls · Toe pulls · Balance game' },
-      { num:4, title:'Finding the Hold', sub:'Kick-ups · Extended balance' },
-      { num:5, title:'Building Endurance', sub:'Shoulder taps · Consistency' },
-      { num:6, title:'The 60-Second Handstand', sub:'Chase the minute' },
+      { num:1, title:'Building the Foundation', sub:'Wrists · Shoulders · Core', thumb:'protractedplank.png' },
+      { num:2, title:'Going Upside Down', sub:'Chest-to-wall · Hollow body', thumb:'chesttowallhandstand01.png' },
+      { num:3, title:'Learning to Balance', sub:'Heel pulls · Toe pulls · Balance game', thumb:'boxassistedhandstand01.png' },
+      { num:4, title:'Finding the Hold', sub:'Kick-ups · Extended balance', thumb:'handstandkickup01.png' },
+      { num:5, title:'Building Endurance', sub:'Shoulder taps · Consistency', thumb:'wallhandstandshouldertap01.png' },
+      { num:6, title:'The 60-Second Handstand', sub:'Chase the minute', thumb:'freestandinghandstand1.png' },
     ];
 
     const gradSet = new Set(graduations.map(g => g.level));
 
     app.innerHTML = `
       <div class="container">
+        <div class="dashboard-hero" aria-hidden="true">
+          <img src="/images/freestandinghandstand1.png" alt="" class="dashboard-hero-img">
+        </div>
         <section class="stats-bar">
           <div class="stat"><div class="stat-num">${user.current_level}</div><div class="stat-label">Current Level</div></div>
           <div class="stat"><div class="stat-num">${totalSessions}</div><div class="stat-label">Sessions</div></div>
@@ -361,6 +391,9 @@ async function renderDashboard() {
             const cls = ['level-card', current && 'level-card--current', done && 'level-card--done', locked && 'level-card--locked'].filter(Boolean).join(' ');
             return `
               <a href="#/level/${lv.num}" class="${cls}">
+                <div class="level-card-thumb">
+                  <img src="/images/${lv.thumb}" alt="" loading="lazy">
+                </div>
                 <div class="level-card-num">${done ? '✓' : lv.num}</div>
                 <div class="level-card-body">
                   <div class="level-card-title">${lv.title}</div>
@@ -433,12 +466,15 @@ async function renderLevel(num) {
         <!-- Exercises -->
         ${levelData.exercises.map((ex, i) => {
           const vid = extractVideoId(ex.video);
+          const imgs = getExerciseImages(ex.key);
+          const imgBlock = imgs.length ? `<div class="exercise-images" aria-label="Form reference: ${esc(ex.name)}">${imgs.slice(0, 4).map(img => `<img src="/images/${img}" alt="" loading="lazy" class="exercise-img">`).join('')}</div>` : '';
           return `
             <div class="exercise-card" id="ex-${ex.key}">
               <div class="exercise-card-header">
                 <h3>${esc(ex.name)}</h3>
                 <div class="exercise-rx">${esc(ex.rx)}</div>
               </div>
+              ${imgBlock}
               ${vid ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vid}" title="${esc(ex.name)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ''}
               <form class="log-form" data-level="${num}" data-key="${ex.key}">
                 <div class="log-form-row">
