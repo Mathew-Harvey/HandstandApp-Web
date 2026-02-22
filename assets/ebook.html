@@ -2124,7 +2124,7 @@ a { color: var(--link); }
   window.addEventListener('resize', function() { updateSidebarForViewport(); });
 
   // ===== INIT =====
-  verifyAccess();
+  showReader(); // Bypass verification - users already authenticated via app
 
 })();
 </script>
