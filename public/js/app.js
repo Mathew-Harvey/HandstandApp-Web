@@ -36,6 +36,15 @@ function getExerciseImages(key) {
   return EXERCISE_IMAGES[n] || [];
 }
 
+// Apply theme to document
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
 // ===== API HELPER =====
 async function api(path, opts = {}) {
   const res = await fetch(`${window.API_URL}/api${path}`, {
@@ -145,6 +154,7 @@ async function router() {
       const me = await api('/auth/me');
       if (me?.authenticated) {
         currentUser = me.user;
+        applyTheme(currentUser.theme);
       } else {
         navigate('/login');
         return;
@@ -174,6 +184,7 @@ async function router() {
   if (path === '/register') return renderRegister();
   if (path === '/forgot-password') return renderForgotPassword();
   if (path === '/dashboard') return renderDashboard();
+  if (path === '/settings') return renderSettings();
   if (path.startsWith('/level/')) return renderLevel(parseInt(path.split('/')[2]));
 
   // Default
@@ -195,6 +206,9 @@ document.addEventListener('click', async (e) => {
     e.preventDefault();
     try { await api('/auth/logout', { method: 'POST' }); } catch {}
     currentUser = null;
+    // Clear toast on logout to prevent stale messages
+    const t = document.getElementById('toast');
+    if (t) t.classList.remove('toast--visible');
     navigate('/login');
   }
 });
@@ -236,6 +250,7 @@ function renderLogin() {
         body: JSON.stringify({ email: f.email.value, password: f.password.value }),
       });
       currentUser = data.user;
+      applyTheme(currentUser.theme);
       navigate('/dashboard');
     } catch (err) {
       const el = $('#authError');
@@ -288,6 +303,7 @@ function renderRegister() {
         }),
       });
       currentUser = data.user;
+      applyTheme(currentUser.theme);
       navigate('/dashboard');
     } catch (err) {
       const el = $('#authError');
@@ -422,6 +438,297 @@ async function renderDashboard() {
   } catch (err) {
     app.innerHTML = `<div class="container"><div class="alert alert-error">${esc(err.message)}</div></div>`;
   }
+}
+
+// ===== SETTINGS =====
+async function renderSettings() {
+  if (!currentUser) return navigate('/login');
+  
+  const theme = currentUser.theme || 'dark';
+  
+  app.innerHTML = `
+    <div class="container">
+      <div class="page-header">
+        <a href="#/dashboard" class="back-link">← Dashboard</a>
+        <h1>Settings</h1>
+      </div>
+      
+      <div class="settings-section">
+        <h2>Account</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Display Name</span>
+              <span class="setting-value">${esc(currentUser.display_name)}</span>
+            </div>
+            <button class="btn btn--secondary" id="editNameBtn">Edit</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Email</span>
+              <span class="setting-value">${esc(currentUser.email)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h2>Appearance</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Theme</span>
+              <span class="setting-sub">Switch between light and dark mode</span>
+            </div>
+            <div class="theme-toggle">
+              <button class="theme-btn ${theme === 'dark' ? 'active' : ''}" data-theme="dark" title="Dark">🌙</button>
+              <button class="theme-btn ${theme === 'light' ? 'active' : ''}" data-theme="light" title="Light">☀️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h2>Password</h2>
+        <div class="settings-card">
+          <button class="btn btn--secondary" id="changePasswordBtn">Change Password</button>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h2>Progress</h2>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Unlock All Levels</span>
+              <span class="setting-sub">Skip to Level 6 and mark all levels as complete</span>
+            </div>
+            <button class="btn btn--secondary" id="unlockAllBtn">Unlock All</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Reset Progress</span>
+              <span class="setting-sub danger-text">Delete all workout logs and start over from Level 1</span>
+            </div>
+            <button class="btn btn--danger" id="resetProgressBtn">Reset All</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h2>About</h2>
+        <div class="settings-card">
+          <p class="about-text">Handstand Tracker v1.0<br>Built with 💪 for handstand dreams</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Theme toggle
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newTheme = btn.dataset.theme;
+      try {
+        const data = await api('/auth/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ theme: newTheme })
+        });
+        if (data && data.user) {
+          currentUser = data.user;
+          document.documentElement.setAttribute('data-theme', newTheme);
+          document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          toast('Theme updated!', true);
+        }
+      } catch (err) {
+        toast(err.message, false);
+      }
+    });
+  });
+  
+  // Apply current theme
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Change password
+  $('#changePasswordBtn')?.addEventListener('click', () => showChangePasswordModal());
+  
+  // Edit name
+  $('#editNameBtn')?.addEventListener('click', () => showEditNameModal());
+  
+  // Unlock all
+  $('#unlockAllBtn')?.addEventListener('click', async () => {
+    if (!confirm('This will unlock all 6 levels and mark them as complete. Continue?')) return;
+    try {
+      await api('/auth/unlock-all', { method: 'POST' });
+      currentUser.current_level = 6;
+      toast('All levels unlocked! 🎉', true);
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+  
+  // Reset progress
+  $('#resetProgressBtn')?.addEventListener('click', async () => {
+    if (!confirm('⚠️ This will DELETE all your workout logs and reset you to Level 1. This cannot be undone! Are you sure?')) return;
+    if (!confirm('Really? All progress will be lost forever.')) return;
+    try {
+      await api('/auth/reset-progress', { method: 'POST' });
+      currentUser.current_level = 1;
+      toast('Progress reset. Good luck!', true);
+      navigate('/dashboard');
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+}
+
+function showChangePasswordModal() {
+  const modal = $('#changePasswordModal');
+  if (!modal) {
+    // Create modal if not exists
+    const modalHtml = `
+      <div class="modal-overlay" id="changePasswordModal" aria-hidden="true">
+        <div class="modal">
+          <h3>Change Password</h3>
+          <form id="changePasswordForm">
+            <div class="form-group">
+              <label for="currentPassword">Current Password</label>
+              <input type="password" id="currentPassword" name="current_password" required>
+            </div>
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <input type="password" id="newPassword" name="new_password" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label for="confirmNewPassword">Confirm New Password</label>
+              <input type="password" id="confirmNewPassword" name="confirm_password" required>
+            </div>
+            <div class="alert alert-error" id="changePasswordError" style="display:none"></div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--secondary" id="cancelChangePassword">Cancel</button>
+              <button type="submit" class="btn btn--primary">Change Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+  
+  const modalEl = $('#changePasswordModal');
+  const form = $('#changePasswordForm');
+  const errEl = $('#changePasswordError');
+  const cancelBtn = $('#cancelChangePassword');
+  
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  form.reset();
+  modalEl.classList.add('modal-overlay--visible');
+  modalEl.setAttribute('aria-hidden', 'false');
+  
+  cancelBtn?.addEventListener('click', () => {
+    modalEl.classList.remove('modal-overlay--visible');
+    modalEl.setAttribute('aria-hidden', 'true');
+  });
+  
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const current_password = form.current_password.value;
+    const new_password = form.new_password.value;
+    const confirm_password = form.confirm_password.value;
+    
+    if (new_password !== confirm_password) {
+      if (errEl) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = ''; }
+      return;
+    }
+    
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    if (errEl) errEl.style.display = 'none';
+    
+    try {
+      await api('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ current_password, new_password, confirm_password })
+      });
+      modalEl.classList.remove('modal-overlay--visible');
+      modalEl.setAttribute('aria-hidden', 'true');
+      toast('Password changed successfully!', true);
+    } catch (err) {
+      if (errEl) { errEl.textContent = err.message || 'Failed to change password.'; errEl.style.display = ''; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Change Password'; }
+    }
+  };
+}
+
+function showEditNameModal() {
+  const modal = $('#editNameModal');
+  if (!modal) {
+    const modalHtml = `
+      <div class="modal-overlay" id="editNameModal" aria-hidden="true">
+        <div class="modal">
+          <h3>Edit Display Name</h3>
+          <form id="editNameForm">
+            <div class="form-group">
+              <label for="displayName">Display Name</label>
+              <input type="text" id="displayName" name="display_name" required minlength="1" maxlength="100">
+            </div>
+            <div class="alert alert-error" id="editNameError" style="display:none"></div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--secondary" id="cancelEditName">Cancel</button>
+              <button type="submit" class="btn btn--primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+  
+  const modalEl = $('#editNameModal');
+  const form = $('#editNameForm');
+  const errEl = $('#editNameError');
+  const cancelBtn = $('#cancelEditName');
+  
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  form.display_name.value = currentUser.display_name || '';
+  modalEl.classList.add('modal-overlay--visible');
+  modalEl.setAttribute('aria-hidden', 'false');
+  
+  cancelBtn?.addEventListener('click', () => {
+    modalEl.classList.remove('modal-overlay--visible');
+    modalEl.setAttribute('aria-hidden', 'true');
+  });
+  
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const display_name = form.display_name.value.trim();
+    if (!display_name) {
+      if (errEl) { errEl.textContent = 'Display name cannot be empty.'; errEl.style.display = ''; }
+      return;
+    }
+    
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    if (errEl) errEl.style.display = 'none';
+    
+    try {
+      const data = await api('/auth/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ display_name })
+      });
+      if (data && data.user) {
+        currentUser = data.user;
+        $('#navUser').textContent = currentUser.display_name;
+        modalEl.classList.remove('modal-overlay--visible');
+        modalEl.setAttribute('aria-hidden', 'true');
+        toast('Name updated!', true);
+        renderSettings(); // Refresh page
+      }
+    } catch (err) {
+      if (errEl) { errEl.textContent = err.message || 'Failed to update name.'; errEl.style.display = ''; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+    }
+  };
 }
 
 async function renderLevel(num) {
