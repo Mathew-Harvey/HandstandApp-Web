@@ -1720,6 +1720,12 @@ a { color: var(--link); }
     loadPreferences();
     restoreScroll();
     updateSidebarForViewport();
+    
+    // Set crossOrigin on all images so they can be fetched for ePub
+    var imgs = document.querySelectorAll('#content-area img');
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].crossOrigin = 'anonymous';
+    }
   }
 
   // ===== 2. SCROLL PROGRESS + CHAPTER DETECTION =====
@@ -1861,19 +1867,29 @@ a { color: var(--link); }
     }
     showToast('Loading images…', 5000);
     
-    // Preload all images first
+    // Preload all images first - ensure they're fully loaded
     var allImgEls = document.querySelectorAll('#content-area img');
     var preloadPromises = [];
+    var baseUrl = window.location.origin;
+    
     for (var i = 0; i < allImgEls.length; i++) {
       (function(img) {
-        if (img.src && img.src.startsWith('/')) {
-          preloadPromises.push(new Promise(function(resolve) {
-            var i2 = new Image();
-            i2.onload = function() { resolve(); };
-            i2.onerror = function() { resolve(); };
-            i2.src = img.src;
-          }));
-        }
+        var src = img.getAttribute('src');
+        if (!src) return;
+        
+        // Build absolute URL
+        var absSrc = src.startsWith('http') ? src : (src.startsWith('/') ? baseUrl + src : baseUrl + '/' + src);
+        
+        preloadPromises.push(new Promise(function(resolve) {
+          // If already loaded, resolve immediately
+          if (img.complete && img.naturalHeight > 0) { resolve(); return; }
+          
+          var i2 = new Image();
+          i2.crossOrigin = 'anonymous';
+          i2.onload = function() { resolve(); };
+          i2.onerror = function() { resolve(); };
+          i2.src = absSrc;
+        }));
       })(allImgEls[i]);
     }
     await Promise.all(preloadPromises);
@@ -1896,18 +1912,26 @@ a { color: var(--link); }
       var imgMap = {};
       var imgList = [];
       var imgEls = document.querySelectorAll('#content-area img');
+      var baseUrl = window.location.origin;
+      
       for (var i = 0; i < imgEls.length; i++) {
         var src = imgEls[i].getAttribute('src');
         if (!src || imgMap[src]) continue;
         imgMap[src] = true;
         var fname = src.split('/').pop();
+        
+        // Build absolute URL - handle both relative and absolute src
+        var absSrc = src.startsWith('http') ? src : baseUrl + (src.startsWith('/') ? src : '/' + src);
+        
         try {
-          var absSrc = new URL(src, window.location.href).href;
-          var resp = await fetch(absSrc);
+          var resp = await fetch(absSrc, { mode: 'cors' });
+          if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
           var blob = await resp.blob();
           imgList.push({ filename: fname, blob: blob, type: blob.type || 'image/png' });
           zip.file('OEBPS/assets/images/' + fname, blob);
-        } catch (e) { /* skip failed images */ }
+        } catch (e) {
+          console.error('Failed to load image:', fname, e);
+        }
       }
 
       var epubCSS =
