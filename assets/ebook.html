@@ -1865,36 +1865,7 @@ a { color: var(--link); }
       showToast('ePub library failed to load — please refresh and try again.', 4000);
       return;
     }
-    showToast('Loading images…', 5000);
-    
-    // Preload all images first - ensure they're fully loaded
-    var allImgEls = document.querySelectorAll('#content-area img');
-    var preloadPromises = [];
-    var baseUrl = window.location.origin;
-    
-    for (var i = 0; i < allImgEls.length; i++) {
-      (function(img) {
-        var src = img.getAttribute('src');
-        if (!src) return;
-        
-        // Build absolute URL
-        var absSrc = src.startsWith('http') ? src : (src.startsWith('/') ? baseUrl + src : baseUrl + '/' + src);
-        
-        preloadPromises.push(new Promise(function(resolve) {
-          // If already loaded, resolve immediately
-          if (img.complete && img.naturalHeight > 0) { resolve(); return; }
-          
-          var i2 = new Image();
-          i2.crossOrigin = 'anonymous';
-          i2.onload = function() { resolve(); };
-          i2.onerror = function() { resolve(); };
-          i2.src = absSrc;
-        }));
-      })(allImgEls[i]);
-    }
-    await Promise.all(preloadPromises);
-    
-    showToast('Generating ePub — this may take a moment…', 15000);
+    showToast('Preparing images…', 5000);
 
     try {
       var zip = new JSZip();
@@ -1909,30 +1880,48 @@ a { color: var(--link); }
         '</container>'
       );
 
+      // Use canvas to convert images to base64 - bypasses CORS completely
       var imgMap = {};
       var imgList = [];
       var imgEls = document.querySelectorAll('#content-area img');
-      var baseUrl = window.location.origin;
       
       for (var i = 0; i < imgEls.length; i++) {
-        var src = imgEls[i].getAttribute('src');
+        var img = imgEls[i];
+        var src = img.getAttribute('src');
         if (!src || imgMap[src]) continue;
         imgMap[src] = true;
-        var fname = src.split('/').pop();
         
-        // Build absolute URL - handle both relative and absolute src
-        var absSrc = src.startsWith('http') ? src : baseUrl + (src.startsWith('/') ? src : '/' + src);
+        var fname = src.split('/').pop();
+        if (!fname || !fname.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
+          fname = 'image-' + i + '.png';
+        }
         
         try {
-          var resp = await fetch(absSrc, { mode: 'cors' });
-          if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
-          var blob = await resp.blob();
-          imgList.push({ filename: fname, blob: blob, type: blob.type || 'image/png' });
-          zip.file('OEBPS/assets/images/' + fname, blob);
+          // Create canvas and draw image to get base64
+          var canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          var ctx = canvas.getContext('2d');
+          
+          // Check if image is loaded
+          if (img.complete && img.naturalHeight > 0) {
+            ctx.drawImage(img, 0, 0);
+            var dataUrl = canvas.toDataURL('image/png');
+            var base64 = dataUrl.split(',')[1];
+            var binary = atob(base64);
+            var array = new Uint8Array(binary.length);
+            for (var j = 0; j < binary.length; j++) {
+              array[j] = binary.charCodeAt(j);
+            }
+            imgList.push({ filename: fname, blob: new Blob([array], { type: 'image/png' }), type: 'image/png' });
+            zip.file('OEBPS/assets/images/' + fname, new Blob([array], { type: 'image/png' }));
+          }
         } catch (e) {
-          console.error('Failed to load image:', fname, e);
+          console.log('Skipping image:', fname, e.message);
         }
       }
+
+      showToast('Generating ePub with ' + imgList.length + ' images…', 10000);
 
       var epubCSS =
         'body{font-family:Georgia,"Times New Roman",serif;line-height:1.7;color:#333;margin:1em;padding:0;}\n' +
