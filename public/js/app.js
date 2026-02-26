@@ -184,6 +184,7 @@ async function router() {
   if (path === '/register') return renderRegister();
   if (path === '/forgot-password') return renderForgotPassword();
   if (path === '/dashboard') return renderDashboard();
+  if (path === '/progress') return renderProgress();
   if (path === '/ebook') return renderEbook();
   if (path === '/settings') return renderSettings();
   if (path.startsWith('/level/')) return renderLevel(parseInt(path.split('/')[2]));
@@ -494,6 +495,16 @@ async function renderDashboard() {
               </a>`;
           }).join('')}
         </div>
+        <section class="ebook-dashboard-card">
+          <a href="#/progress" class="ebook-dashboard-link">
+            <div class="ebook-dashboard-icon">📊</div>
+            <div class="ebook-dashboard-body">
+              <div class="ebook-dashboard-title">Progress Dashboard</div>
+              <div class="ebook-dashboard-sub">Streaks, heatmap, personal bests &amp; more</div>
+            </div>
+            <span class="ebook-dashboard-arrow">›</span>
+          </a>
+        </section>
         <section class="ebook-dashboard-card">
           <a href="#/ebook" class="ebook-dashboard-link">
             <div class="ebook-dashboard-icon">📖</div>
