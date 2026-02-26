@@ -206,18 +206,22 @@ img { max-width: 100%; display: block; }
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;
   background: var(--card);
-  max-height: 260px;
+  display: flex;
+  height: 220px;
 }
 .dashboard-hero-img {
-  width: 100%;
-  height: 260px;
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 100%;
   object-fit: cover;
-  object-position: center 60%;
+  object-position: center 40%;
+}
+.dashboard-hero-img:nth-child(2) { display: none; }
+@media (min-width: 480px) {
+  .dashboard-hero-img:nth-child(2) { display: block; }
 }
 @media (min-width: 768px) {
-  .dashboard-hero { margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: 1.5rem; }
-  .dashboard-hero-img { height: 280px; }
-  .dashboard-hero { max-height: 280px; }
+  .dashboard-hero { margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: 1.5rem; height: 260px; }
 }
 
 /* ===== STATS BAR ===== */

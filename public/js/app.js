@@ -13,7 +13,7 @@ let currentUser = null;
 // Aligned with "The handstand - complete training guide" and assets/images
 const EXERCISE_IMAGES = {
   wristheelraises: ['wrist01.png', 'writs02.png', 'wrist03.png'],
-  finpushups: ['wrist01.png', 'writs02.png', 'wrist03.png'],
+  finpushups: ['finpushups.png'],
   deskstretchexternalrotation: ['overheaddeskstretch01.png'],
   overheaddeskstretch: ['overheaddeskstretch01.png', 'overheaddeskstretch02.png'],
   hang: ['hang.png'],
@@ -461,7 +461,9 @@ async function renderDashboard() {
     app.innerHTML = `
       <div class="container">
         <div class="dashboard-hero" aria-hidden="true">
-          <img src="/images/freestandinghandstand1.png" alt="" class="dashboard-hero-img">
+          <img src="/images/handstandkickup04.png" alt="" class="dashboard-hero-img">
+          <img src="/images/handstandkickup02.png" alt="" class="dashboard-hero-img">
+          <img src="/images/handstandkickup01.png" alt="" class="dashboard-hero-img">
         </div>
         <section class="stats-bar">
           <div class="stat"><div class="stat-num">${user.current_level}</div><div class="stat-label">Current Level</div></div>
