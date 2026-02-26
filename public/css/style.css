@@ -100,12 +100,16 @@ img { max-width: 100%; display: block; }
   border-bottom: 1px solid var(--border);
 }
 .nav-logo {
-  font-family: var(--heading);
-  font-weight: 800; font-size: 0.8rem;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--light); text-decoration: none;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
 }
-.nav-logo span { color: var(--accent); }
+.nav-logo-img {
+  height: 1.75rem;
+  width: auto;
+  display: block;
+}
+@media (min-width: 640px) { .nav-logo-img { height: 2rem; } }
 .nav-right { display: flex; align-items: center; gap: 0.75rem; }
 .nav-user { font-size: 0.8rem; color: var(--sub); display: none; }
 .nav-icon { font-size: 1.1rem; text-decoration: none; margin-right: 0.5rem; cursor: pointer; opacity: 0.7; }
@@ -202,18 +206,18 @@ img { max-width: 100%; display: block; }
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;
   background: var(--card);
-  max-height: 200px;
+  max-height: 260px;
 }
 .dashboard-hero-img {
   width: 100%;
-  height: 200px;
+  height: 260px;
   object-fit: cover;
-  object-position: center top;
+  object-position: center 60%;
 }
 @media (min-width: 768px) {
   .dashboard-hero { margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: 1.5rem; }
-  .dashboard-hero-img { height: 240px; }
-  .dashboard-hero { max-height: 240px; }
+  .dashboard-hero-img { height: 280px; }
+  .dashboard-hero { max-height: 280px; }
 }
 
 /* ===== STATS BAR ===== */

@@ -854,6 +854,7 @@ async function renderLevel(num) {
         <!-- Exercises -->
         ${levelData.exercises.map((ex, i) => {
           const vid = extractVideoId(ex.video);
+          const startSeconds = getVideoStartSeconds(ex.video);
           const imgs = getExerciseImages(ex.key);
           const imgBlock = imgs.length ? `<div class="exercise-images" aria-label="Form reference: ${esc(ex.name)}">${imgs.slice(0, 4).map(img => `<img src="/images/${img}" alt="" loading="lazy" class="exercise-img">`).join('')}</div>` : '';
           return `
@@ -863,7 +864,7 @@ async function renderLevel(num) {
                 <div class="exercise-rx">${esc(ex.rx)}</div>
               </div>
               ${imgBlock}
-              ${vid ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vid}" title="${esc(ex.name)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ''}
+              ${vid ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vid}${startSeconds ? `?start=${startSeconds}` : ''}" title="${esc(ex.name)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ''}
               <form class="log-form" data-level="${num}" data-key="${ex.key}">
                 <div class="log-form-row">
                   <div class="form-group"><label>Sets</label><input type="number" name="sets_completed" min="0" max="20" value="3" inputmode="numeric"></div>
@@ -1100,4 +1101,19 @@ function extractVideoId(url) {
   if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
   if (url.includes('v=')) return url.split('v=')[1].split('&')[0];
   return '';
+}
+
+/** Parse YouTube t= param (e.g. t=145s, t=2m25s, t=1h2m3s) to seconds. Returns 0 if missing/invalid. */
+function getVideoStartSeconds(url) {
+  if (!url || typeof url !== 'string') return 0;
+  const match = url.match(/[?&]t=([^&]+)/i);
+  if (!match) return 0;
+  const val = match[1].toLowerCase();
+  const h = val.match(/(\d+)h/);
+  const m = val.match(/(\d+)m/);
+  const s = val.match(/(\d+)s?$/);
+  const hours = h ? parseInt(h[1], 10) : 0;
+  const mins = m ? parseInt(m[1], 10) : 0;
+  const secs = s ? parseInt(s[1], 10) : 0;
+  return hours * 3600 + mins * 60 + secs;
 }
