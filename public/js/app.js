@@ -866,7 +866,7 @@ async function renderLevel(num) {
                 <div class="exercise-rx">${esc(ex.rx)}</div>
               </div>
               ${imgBlock}
-              ${vid ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vid}${startSeconds ? `?start=${startSeconds}` : ''}" title="${esc(ex.name)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ''}
+              ${vid ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${vid}?${startSeconds ? `start=${startSeconds}&` : ''}mute=1" title="${esc(ex.name)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ''}
               <form class="log-form" data-level="${num}" data-key="${ex.key}">
                 <div class="log-form-row">
                   <div class="form-group"><label>Sets</label><input type="number" name="sets_completed" min="0" max="20" value="3" inputmode="numeric"></div>
