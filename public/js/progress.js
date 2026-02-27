@@ -339,6 +339,17 @@ async function renderProgress() {
           <p class="pd-subtitle">Keep showing up, ${esc(user.display_name)}. Every rep counts.</p>
         </div>
 
+        ${totals.totalLogs > 0 && !localStorage.getItem('pd_demo_cleared') ? `
+        <div class="pd-demo-banner" id="pdDemoBanner">
+          <div class="pd-demo-banner-text">
+            <strong>Got test data?</strong> Clear all workout logs and graduations to start fresh with real tracking.
+          </div>
+          <div class="pd-demo-banner-actions">
+            <button class="pd-demo-btn pd-demo-btn--clear" id="pdClearDemoBtn">Clear All Data</button>
+            <button class="pd-demo-btn pd-demo-btn--dismiss" id="pdDismissDemoBtn">Dismiss</button>
+          </div>
+        </div>` : ''}
+
         <!-- Hero Stats -->
         <section class="pd-hero" aria-label="Key statistics">
           <div class="pd-card pd-card--streak ${loggedToday ? 'pd-card--active' : ''}">
@@ -484,6 +495,34 @@ async function renderProgress() {
 
     // Scroll-triggered animations
     pdScrollAnim();
+
+    // Demo data banner actions
+    const clearBtn = document.getElementById('pdClearDemoBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', async () => {
+        if (!confirm('This will permanently delete ALL workout logs, graduations, and reset you to Level 1. Continue?')) return;
+        clearBtn.disabled = true;
+        clearBtn.textContent = 'Clearing…';
+        try {
+          await api('/auth/reset-progress', { method: 'POST' });
+          currentUser.current_level = 1;
+          localStorage.setItem('pd_demo_cleared', '1');
+          toast('All data cleared. Starting fresh!', true);
+          renderProgress();
+        } catch (err) {
+          toast(err.message, false);
+          clearBtn.disabled = false;
+          clearBtn.textContent = 'Clear All Data';
+        }
+      });
+    }
+    const dismissBtn = document.getElementById('pdDismissDemoBtn');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        localStorage.setItem('pd_demo_cleared', '1');
+        document.getElementById('pdDemoBanner').remove();
+      });
+    }
 
   } catch (err) {
     app.innerHTML = `<div class="pd-page"><div class="pd-inner"><div class="alert alert-error">${typeof esc === 'function' ? esc(err.message) : err.message}</div></div></div>`;

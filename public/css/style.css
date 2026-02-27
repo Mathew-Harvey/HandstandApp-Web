@@ -875,6 +875,33 @@ button:disabled {
   font-size: 0.85rem; color: #58a6ff;
 }
 
+/* ===== DEMO DATA BANNER ===== */
+.pd-demo-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 0.75rem 1rem;
+  background: rgba(210, 153, 34, 0.1);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  border-radius: 10px; margin-bottom: 1.5rem;
+}
+.pd-demo-banner-text {
+  font-size: 0.85rem; color: #e6edf3; line-height: 1.4;
+}
+.pd-demo-banner-text strong { color: #d29922; }
+.pd-demo-banner-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.pd-demo-btn {
+  padding: 0.4rem 0.85rem; border-radius: 6px;
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  border: none; transition: opacity 0.15s;
+}
+.pd-demo-btn:hover { opacity: 0.85; }
+.pd-demo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pd-demo-btn--clear { background: #da3633; color: #fff; }
+.pd-demo-btn--dismiss { background: rgba(110,118,129,0.25); color: #8b949e; }
+@media (max-width: 540px) {
+  .pd-demo-banner { flex-direction: column; align-items: stretch; text-align: center; }
+  .pd-demo-banner-actions { justify-content: center; }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (min-width: 640px) {
   .pd-stat-value { font-size: 2.75rem; }
