@@ -60,129 +60,53 @@ function pdShortDate(dateStr) {
   } catch { return dateStr; }
 }
 
-// Deterministic PRNG (Mulberry32) for consistent mock data across reloads
-function pdMulberry32(a) {
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
+/* ------------------------------------------------------------------
+   Fill weekly volume — ensures 12 continuous weeks for the chart,
+   filling gaps with zeros where the API has no data.
+   ------------------------------------------------------------------ */
+function pdFillWeeklyVolume(apiWeekly) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dow = today.getDay();
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - ((dow + 6) % 7));
 
-function pdISOWeek(d) {
-  const dt = new Date(d.getTime());
-  dt.setHours(0, 0, 0, 0);
-  dt.setDate(dt.getDate() + 3 - (dt.getDay() + 6) % 7);
-  const w1 = new Date(dt.getFullYear(), 0, 4);
-  return 1 + Math.round(((dt - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+  const byStart = {};
+  apiWeekly.forEach(w => { byStart[w.week_start] = w; });
+
+  const result = [];
+  for (let i = 11; i >= 0; i--) {
+    const monday = new Date(thisMonday);
+    monday.setDate(thisMonday.getDate() - i * 7);
+    const dateStr = monday.toISOString().split('T')[0];
+    const entry = byStart[dateStr];
+    result.push({
+      sessions: entry ? entry.sessions : 0,
+      sets: entry ? entry.sets : 0,
+      weekStart: dateStr,
+    });
+  }
+  return result;
 }
 
 /* ------------------------------------------------------------------
-   Mock stats generator — produces realistic data aligned with the
-   real /api/dashboard response so the UI looks believable.
-   Replace with fetch('/api/dashboard/stats') when the endpoint exists.
+   Build complete 6-level timeline from sparse API data + dashboard
    ------------------------------------------------------------------ */
-function pdGenerateMockStats(dashboard) {
-  const rng = pdMulberry32(42);
-  const { user, graduations, totalSessions, streak } = dashboard;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
-
-  // Heatmap: ~6 months (182 days)
-  const heatmap = [];
-  for (let i = 181; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const dow = d.getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    const monthsAgo = (today.getFullYear() - d.getFullYear()) * 12 + (today.getMonth() - d.getMonth());
-    const bias = Math.max(0.3, 1 - monthsAgo * 0.1);
-    const r = rng();
-    let count;
-    if (dateStr === todayStr) {
-      count = Math.floor(rng() * 3) + 1;
-    } else if (r > bias) {
-      count = 0;
-    } else {
-      const r2 = rng();
-      if (r2 < 0.35) count = 1;
-      else if (r2 < 0.6) count = 2;
-      else if (r2 < 0.8) count = 3;
-      else count = isWeekend ? Math.floor(rng() * 3) + 4 : Math.floor(rng() * 2) + 3;
-    }
-    heatmap.push({ date: dateStr, count });
-  }
-
-  // Weekly volume: last 12 weeks
-  const weeklyVolume = [];
-  for (let w = 11; w >= 0; w--) {
-    const ws = new Date(today);
-    ws.setDate(ws.getDate() - w * 7);
-    const baseSessions = Math.floor(rng() * 3) + 3;
-    const trend = 1 + (11 - w) * 0.03;
-    const sessions = Math.round(baseSessions * trend);
-    const sets = sessions * (Math.floor(rng() * 3) + 3);
-    weeklyVolume.push({
-      week: `${ws.getFullYear()}-W${String(pdISOWeek(ws)).padStart(2, '0')}`,
-      sessions,
-      sets,
-      weekStart: ws.toISOString().split('T')[0],
-    });
-  }
-  for (let i = weeklyVolume.length - 3; i < weeklyVolume.length; i++) {
-    weeklyVolume[i].sets = Math.round(weeklyVolume[i].sets * 1.2);
-  }
-
-  // Personal bests
-  const personalBests = [
-    { exercise_key: 'hang', best_hold_seconds: 45, best_sets: 5, achieved_at: '2026-01-10' },
-    { exercise_key: 'protracted_plank', best_hold_seconds: 60, best_sets: 3, achieved_at: '2025-11-22' },
-    { exercise_key: 'hollow_body', best_hold_seconds: 35, best_sets: 3, achieved_at: '2026-01-05' },
-    { exercise_key: 'chest_to_wall', best_hold_seconds: 120, best_sets: 4, achieved_at: '2025-12-20' },
-    { exercise_key: 'body_line_drill', best_hold_seconds: 30, best_sets: 3, achieved_at: '2025-10-15' },
-  ];
-
-  // Level timeline
+function pdBuildLevelTimeline(apiTimeline, user, graduations) {
+  const timelineMap = {};
+  apiTimeline.forEach(t => { timelineMap[t.level] = t; });
   const gradMap = {};
   graduations.forEach(g => { gradMap[g.level] = g.graduated_at; });
-  const levelTimeline = [];
+
+  const result = [];
   for (let lv = 1; lv <= 6; lv++) {
-    const prevGrad = lv > 1 ? gradMap[lv - 1] : user.created_at;
-    levelTimeline.push({
+    result.push({
       level: lv,
-      started_at: lv <= user.current_level ? (prevGrad || null) : null,
+      started_at: timelineMap[lv] ? timelineMap[lv].started_at : null,
       graduated_at: gradMap[lv] || null,
     });
   }
-
-  // Exercise breakdown (sorted by total_logs desc)
-  const exerciseBreakdown = [
-    { exercise_key: 'heel_pulls', name: 'Heel Pulls', total_logs: 34 },
-    { exercise_key: 'protracted_plank', name: 'Protracted Plank', total_logs: 28 },
-    { exercise_key: 'chest_to_wall', name: 'Chest-to-Wall HS', total_logs: 25 },
-    { exercise_key: 'hang', name: 'Dead Hang', total_logs: 22 },
-    { exercise_key: 'toe_pulls', name: 'Toe Pulls', total_logs: 19 },
-    { exercise_key: 'hollow_body', name: 'Hollow Body Hold', total_logs: 17 },
-    { exercise_key: 'body_line_drill', name: 'Body Line Drill', total_logs: 14 },
-    { exercise_key: 'wrist_heel_raises', name: 'Wrist Heel Raises', total_logs: 12 },
-    { exercise_key: 'fin_pushups', name: 'Fingertip Push-ups', total_logs: 10 },
-    { exercise_key: 'box_balance', name: 'Box Balance', total_logs: 8 },
-  ];
-
-  const daysSince = Math.floor((today - new Date(user.created_at)) / 86400000);
-
-  return {
-    heatmap,
-    weeklyVolume,
-    personalBests,
-    levelTimeline,
-    exerciseBreakdown,
-    totals: { totalSessions, totalSets: 412, totalLogs: 193, memberSinceDays: daysSince },
-    streak: { current: streak, longest: 23 },
-  };
+  return result;
 }
 
 /* ------------------------------------------------------------------
@@ -384,14 +308,21 @@ async function renderProgress() {
   app.innerHTML = '<div class="pd-page"><div class="pd-inner"><p style="color:#8b949e;text-align:center;padding:3rem 0">Loading…</p></div></div>';
 
   try {
-    const dashboard = await api('/dashboard');
-    if (!dashboard) return;
+    const [dashboard, stats] = await Promise.all([
+      api('/dashboard'),
+      api('/dashboard/stats'),
+    ]);
+    if (!dashboard || !stats) return;
     const { user } = dashboard;
     currentUser = user;
 
-    // Mock stats — swap with api('/dashboard/stats') when ready
-    const stats = pdGenerateMockStats(dashboard);
-    const { heatmap, weeklyVolume, personalBests, levelTimeline, exerciseBreakdown, totals, streak: streakData } = stats;
+    const heatmap = stats.heatmap || [];
+    const weeklyVolume = pdFillWeeklyVolume(stats.weeklyVolume || []);
+    const personalBests = stats.personalBests || [];
+    const levelTimeline = pdBuildLevelTimeline(stats.levelTimeline || [], user, dashboard.graduations || []);
+    const exerciseBreakdown = stats.exerciseBreakdown || [];
+    const totals = stats.totals || { totalSessions: 0, totalSets: 0, totalLogs: 0, memberSinceDays: 0 };
+    const streakData = stats.streak || { current: 0, longest: 0 };
 
     const todayStr = new Date().toISOString().split('T')[0];
     const loggedToday = heatmap.some(h => h.date === todayStr && h.count > 0);
@@ -513,17 +444,21 @@ async function renderProgress() {
         <!-- Most Practiced -->
         <section class="pd-section" aria-label="Most practiced exercises">
           <h2 class="pd-heading">Most Practiced</h2>
+          ${exerciseBreakdown.length ? `
           <div class="pd-card pd-bars-card">
             ${exerciseBreakdown.slice(0, 5).map((ex, i) => {
               const pct = Math.round((ex.total_logs / exerciseBreakdown[0].total_logs) * 100);
               return `<div class="pd-bar-row">
                 <div class="pd-bar-rank">${i + 1}</div>
-                <div class="pd-bar-name">${esc(ex.name)}</div>
+                <div class="pd-bar-name">${esc(pdExName(ex.exercise_key))}</div>
                 <div class="pd-bar-track"><div class="pd-bar-fill" style="--w:${pct}%"></div></div>
                 <div class="pd-bar-count">${ex.total_logs}</div>
               </div>`;
             }).join('')}
-          </div>
+          </div>` : `
+          <div class="pd-card pd-empty">
+            <p>Start logging workouts to see your most practiced exercises!</p>
+          </div>`}
         </section>
       </div>
 
