@@ -407,7 +407,7 @@ function renderEbook() {
   app.innerHTML = `
     <div class="container">
       <div class="page-header">
-        <a href="#/dashboard" class="back-link">← Dashboard</a>
+        <a href="#/dashboard" class="btn-dashboard">Dashboard</a>
         <h1>Training Guide</h1>
         <p class="auth-sub">The Handstand — The Complete Training Guide</p>
       </div>
@@ -556,7 +556,7 @@ async function renderSettings() {
   app.innerHTML = `
     <div class="container">
       <div class="page-header">
-        <a href="#/dashboard" class="back-link">← Dashboard</a>
+        <a href="#/dashboard" class="btn-dashboard">Dashboard</a>
         <h1>Settings</h1>
       </div>
       
@@ -859,7 +859,7 @@ async function renderLevel(num) {
     app.innerHTML = `
       <div class="container">
         <div class="level-header">
-          <a href="#/dashboard" class="back-link">← Dashboard</a>
+          <a href="#/dashboard" class="btn-dashboard">Dashboard</a>
           <div class="level-header-num">Level ${num}</div>
           <h1>${esc(levelData.title)}</h1>
           <p class="level-header-sub">${esc(levelData.subtitle)}</p>

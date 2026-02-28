@@ -334,7 +334,7 @@ async function renderProgress() {
     <div class="pd-page">
       <div class="pd-inner">
         <div class="pd-header">
-          <a href="#/dashboard" class="back-link">← Dashboard</a>
+          <a href="#/dashboard" class="btn-dashboard">Dashboard</a>
           <h1 class="pd-title">Your Progress</h1>
           <p class="pd-subtitle">Keep showing up, ${esc(user.display_name)}. Every rep counts.</p>
         </div>

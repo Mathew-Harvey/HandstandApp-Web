@@ -317,6 +317,35 @@ img { max-width: 100%; display: block; }
 .level-header { margin-bottom: 1.25rem; }
 .back-link { font-size: 0.8rem; color: var(--sub); display: inline-block; margin-bottom: 0.5rem; }
 .back-link:hover { color: var(--accent2); text-decoration: none; }
+
+/* Back to Dashboard — prominent button-style link */
+.btn-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-family: var(--heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-dashboard:hover {
+  color: var(--accent2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  text-decoration: none;
+}
+.btn-dashboard::before {
+  content: "←";
+  font-weight: 700;
+  opacity: 0.9;
+}
 .level-header-num {
   font-family: var(--heading); font-weight: 800; font-size: 0.7rem;
   letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.25rem;
