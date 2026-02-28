@@ -61,8 +61,26 @@ function pdShortDate(dateStr) {
 }
 
 /* ------------------------------------------------------------------
+   Parse ISO week string (e.g. "2026-W08") to Monday YYYY-MM-DD
+   ------------------------------------------------------------------ */
+function pdWeekToMonday(weekStr) {
+  if (!weekStr || typeof weekStr !== 'string') return null;
+  const m = weekStr.match(/^(\d{4})-W(\d{2})$/);
+  if (!m) return null;
+  const year = parseInt(m[1], 10);
+  const weekNum = parseInt(m[2], 10);
+  const jan4 = new Date(year, 0, 4);
+  const dow = jan4.getDay();
+  const mon = new Date(jan4);
+  mon.setDate(jan4.getDate() - (dow === 0 ? 6 : dow - 1));
+  mon.setDate(mon.getDate() + (weekNum - 1) * 7);
+  return mon.toISOString().split('T')[0];
+}
+
+/* ------------------------------------------------------------------
    Fill weekly volume — ensures 12 continuous weeks for the chart,
    filling gaps with zeros where the API has no data.
+   Supports both week_start (YYYY-MM-DD) and week (e.g. 2026-W08).
    ------------------------------------------------------------------ */
 function pdFillWeeklyVolume(apiWeekly) {
   const today = new Date();
@@ -72,7 +90,10 @@ function pdFillWeeklyVolume(apiWeekly) {
   thisMonday.setDate(today.getDate() - ((dow + 6) % 7));
 
   const byStart = {};
-  apiWeekly.forEach(w => { byStart[w.week_start] = w; });
+  apiWeekly.forEach(w => {
+    const key = w.week_start || pdWeekToMonday(w.week);
+    if (key) byStart[key] = w;
+  });
 
   const result = [];
   for (let i = 11; i >= 0; i--) {
@@ -310,7 +331,7 @@ async function renderProgress() {
   try {
     const [dashboard, stats] = await Promise.all([
       api('/dashboard'),
-      api('/dashboard/stats'),
+      api('/dashboard/stats?_t=' + Date.now(), { cache: 'no-store' }),
     ]);
     if (!dashboard || !stats) return;
     const { user } = dashboard;
