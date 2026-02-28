@@ -112,8 +112,11 @@ img { max-width: 100%; display: block; }
 @media (min-width: 640px) { .nav-logo-img { height: 2rem; } }
 .nav-right { display: flex; align-items: center; gap: 0.75rem; }
 .nav-user { font-size: 0.8rem; color: var(--sub); display: none; }
-.nav-icon { font-size: 1.1rem; text-decoration: none; margin-right: 0.5rem; cursor: pointer; opacity: 0.7; }
-.nav-icon:hover { opacity: 1; }
+.nav-icon { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; text-decoration: none; color: var(--sub); cursor: pointer; opacity: 0.85; }
+.nav-icon:hover { opacity: 1; color: var(--text); text-decoration: none; }
+.nav-icon-emoji { font-size: 1.1rem; }
+.nav-icon-label { font-weight: 500; }
+@media (max-width: 380px) { .nav-icon-label { display: none; } }
 .nav-link { font-size: 0.75rem; color: var(--sub); text-decoration: none; font-weight: 500; }
 .nav-link:hover { color: var(--text); text-decoration: none; }
 @media (min-width: 640px) { .nav-user { display: inline; } .nav { padding: 0.75rem 1.5rem; } }
@@ -144,6 +147,7 @@ img { max-width: 100%; display: block; }
 .auth-brand span { color: var(--accent); }
 .auth-card h1 { font-size: 1.4rem; font-weight: 800; color: var(--text-heading); margin-bottom: 0.25rem; }
 .auth-sub { font-size: 0.9rem; color: var(--sub); margin-bottom: 1.25rem; }
+.auth-hint { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.75rem; }
 .auth-form { display: flex; flex-direction: column; gap: 0.5rem; }
 .auth-form label { font-size: 0.8rem; font-weight: 600; color: var(--sub); margin-top: 0.25rem; }
 .auth-form input {

@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="/css/progress.css">
 </head>
 <body>
-<nav class="nav" id="nav" style="display:none">
+<nav class="nav" id="nav" style="display:none" aria-label="Main">
   <a href="#/dashboard" class="nav-logo"><img src="/bwlogo.png" alt="The Bodyweight Gym" class="nav-logo-img"></a>
   <div class="nav-right">
-    <a href="#/progress" class="nav-icon" id="progressNavBtn" title="Progress">📊</a>
-    <a href="#/ebook" class="nav-icon" id="ebookNavBtn" title="Training Guide">📖</a>
-    <a href="#/settings" class="nav-icon" id="settingsBtn" title="Settings">⚙️</a>
+    <a href="#/progress" class="nav-icon" id="progressNavBtn" title="Progress" aria-label="View progress"><span class="nav-icon-emoji" aria-hidden="true">📊</span><span class="nav-icon-label">Progress</span></a>
+    <a href="#/ebook" class="nav-icon" id="ebookNavBtn" title="Training Guide" aria-label="Training guide"><span class="nav-icon-emoji" aria-hidden="true">📖</span><span class="nav-icon-label">Guide</span></a>
+    <a href="#/settings" class="nav-icon" id="settingsBtn" title="Settings" aria-label="Settings"><span class="nav-icon-emoji" aria-hidden="true">⚙️</span><span class="nav-icon-label">Settings</span></a>
     <span class="nav-user" id="navUser"></span>
     <a href="#" class="nav-link" id="logoutBtn">Log out</a>
   </div>
@@ -28,10 +28,11 @@
     <div class="auth-brand">The <span>Bodyweight</span> Gym</div>
     <h2 class="modal-title">Set your password</h2>
     <p class="auth-sub">Choose a new password to sign in.</p>
+    <p class="auth-hint" id="setPasswordReq" aria-live="polite">Minimum 6 characters.</p>
     <div class="alert alert-error" id="setPasswordError" style="display:none"></div>
     <form class="auth-form" id="setPasswordForm">
       <label for="newPassword">New password</label>
-      <input type="password" id="newPassword" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+      <input type="password" id="newPassword" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters" aria-describedby="setPasswordReq">
       <label for="confirmNewPassword">Confirm password</label>
       <input type="password" id="confirmNewPassword" name="confirmNewPassword" required minlength="6" autocomplete="new-password" placeholder="••••••••">
       <button type="submit" class="btn btn-primary btn-full">Set password &amp; continue</button>

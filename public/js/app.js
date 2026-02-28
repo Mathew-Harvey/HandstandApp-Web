@@ -87,7 +87,7 @@ async function handleSetPasswordFlow() {
       app.innerHTML = `<div class="auth-page"><div class="auth-card"><div class="alert alert-error">This link is invalid or has expired.</div><p class="auth-footer auth-footer-links"><a href="#/login">Back to log in</a> · <a href="#/forgot-password">Forgot password?</a></p></div></div>`;
       return;
     }
-    currentUser = data.user;
+    // Do not set currentUser here — user hasn't finished setting password; keeps nav hidden
     showSetPasswordModal(token);
   } catch (err) {
     app.innerHTML = `<div class="auth-page"><div class="auth-card"><div class="alert alert-error">${esc(err.message)}</div><p class="auth-footer auth-footer-links"><a href="#/login">Back to log in</a> · <a href="#/forgot-password">Forgot password?</a></p></div></div>`;
@@ -147,12 +147,17 @@ function closeSetPasswordModal() {
 async function router() {
   const hash = window.location.hash.slice(1) || '/';
   const [path, query] = hash.split('?');
+  const isPublicPath = ['/login', '/register', '/forgot-password'].includes(path);
 
-  // Check auth on every navigation
-  if (!currentUser && !['/login', '/register', '/forgot-password'].includes(path)) {
+  // Always hide nav until we've confirmed the user is authenticated and on an app route
+  nav.style.display = 'none';
+
+  // Check auth on every navigation (except public auth pages)
+  if (!currentUser && !isPublicPath) {
+    app.innerHTML = '<div class="auth-page"><div class="auth-card"><p class="auth-sub"><span class="spinner"></span> Loading…</p></div></div>';
     try {
       const me = await api('/auth/me');
-      if (me?.authenticated) {
+      if (me?.authenticated && me.user) {
         currentUser = me.user;
         applyTheme(currentUser.theme);
       } else {
@@ -166,7 +171,7 @@ async function router() {
   }
 
   // Load levels if not cached (skip on auth pages — requires login)
-  if (!['/login', '/register', '/forgot-password'].includes(path) && !LEVELS.length) {
+  if (!isPublicPath && !LEVELS.length) {
     try {
       const data = await api('/levels');
       if (Array.isArray(data)) LEVELS = data;
@@ -175,7 +180,7 @@ async function router() {
     }
   }
 
-  // Show/hide nav
+  // Show nav only when authenticated; keep hidden on login, register, forgot-password, and set-password
   nav.style.display = currentUser ? '' : 'none';
   if (currentUser) $('#navUser').textContent = currentUser.display_name;
 
@@ -189,13 +194,15 @@ async function router() {
   if (path === '/settings') return renderSettings();
   if (path.startsWith('/level/')) return renderLevel(parseInt(path.split('/')[2]));
 
-  // Default
+  // Default: root (/) or unknown path — send to login or dashboard, never to set-password
   navigate(currentUser ? '/dashboard' : '/login');
 }
 
 window.addEventListener('hashchange', router);
 window.addEventListener('DOMContentLoaded', async () => {
+  // Set-password only when URL has pathname /set-password and a token (e.g. email link)
   if (getSetPasswordTokenFromUrl()) {
+    nav.style.display = 'none';
     await handleSetPasswordFlow();
     return;
   }
@@ -279,7 +286,8 @@ function renderRegister() {
           <label for="email">Email</label>
           <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters">
+          <p class="auth-hint" id="registerPasswordReq">Minimum 6 characters.</p>
+          <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters" aria-describedby="registerPasswordReq">
           <label for="confirm_password">Confirm password</label>
           <input type="password" id="confirm_password" name="confirm_password" required minlength="6" autocomplete="new-password" placeholder="••••••••">
           <button type="submit" class="btn btn-primary btn-full">Create Account</button>
@@ -687,15 +695,16 @@ function showChangePasswordModal() {
           <form id="changePasswordForm">
             <div class="form-group">
               <label for="currentPassword">Current Password</label>
-              <input type="password" id="currentPassword" name="current_password" required>
+              <input type="password" id="currentPassword" name="current_password" required autocomplete="current-password">
             </div>
             <div class="form-group">
               <label for="newPassword">New Password</label>
-              <input type="password" id="newPassword" name="new_password" required minlength="6">
+              <p class="auth-hint" id="changePasswordReq">At least 6 characters.</p>
+              <input type="password" id="newPassword" name="new_password" required minlength="6" autocomplete="new-password" aria-describedby="changePasswordReq">
             </div>
             <div class="form-group">
               <label for="confirmNewPassword">Confirm New Password</label>
-              <input type="password" id="confirmNewPassword" name="confirm_password" required>
+              <input type="password" id="confirmNewPassword" name="confirm_password" required minlength="6" autocomplete="new-password">
             </div>
             <div class="alert alert-error" id="changePasswordError" style="display:none"></div>
             <div class="form-actions">
@@ -729,12 +738,17 @@ function showChangePasswordModal() {
     const current_password = form.current_password.value;
     const new_password = form.new_password.value;
     const confirm_password = form.confirm_password.value;
-    
-    if (new_password !== confirm_password) {
-      if (errEl) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = ''; }
+
+    if (errEl) errEl.style.display = 'none';
+    if (new_password.length < 6) {
+      if (errEl) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = ''; }
       return;
     }
-    
+    if (new_password !== confirm_password) {
+      if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = ''; }
+      return;
+    }
+
     const btn = form.querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     if (errEl) errEl.style.display = 'none';
