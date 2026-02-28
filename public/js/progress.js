@@ -156,13 +156,13 @@ function pdBuildHeatmap(gridEl, monthsEl, data) {
   const countMap = {};
   data.forEach(d => { countMap[d.date] = d.count; });
 
-  const COLORS = ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'];
-  function color(c) {
-    if (c <= 0) return COLORS[0];
-    if (c === 1) return COLORS[1];
-    if (c === 2) return COLORS[2];
-    if (c <= 4) return COLORS[3];
-    return COLORS[4];
+  /** Map count to level 0–4 for theme-aware CSS (--pd-heatmap-0 … --pd-heatmap-4) */
+  function level(c) {
+    if (c <= 0) return 0;
+    if (c === 1) return 1;
+    if (c === 2) return 2;
+    if (c <= 4) return 3;
+    return 4;
   }
 
   let cells = '';
@@ -183,9 +183,9 @@ function pdBuildHeatmap(gridEl, monthsEl, data) {
       const dateStr = cellDate.toISOString().split('T')[0];
       const future = cellDate > today;
       const cnt = future ? -1 : (countMap[dateStr] || 0);
-      const bg = future ? 'transparent' : color(cnt);
+      const levelClass = future ? '' : ` pd-hm-cell--l${level(cnt)}`;
       const label = future ? '' : `${cnt} log${cnt !== 1 ? 's' : ''} on ${pdFormatDate(dateStr)}`;
-      cells += `<div class="pd-hm-cell${future ? ' pd-hm-cell--empty' : ''}" style="background:${bg}" data-date="${dateStr}" data-count="${cnt}" aria-label="${label}" role="gridcell"></div>`;
+      cells += `<div class="pd-hm-cell${future ? ' pd-hm-cell--empty' : ''}${levelClass}" data-date="${dateStr}" data-count="${cnt}" aria-label="${label}" role="gridcell"></div>`;
     }
   }
   gridEl.innerHTML = cells;
@@ -378,11 +378,11 @@ async function renderProgress() {
             </div>
             <div class="pd-heatmap-legend">
               <span>Less</span>
-              <div class="pd-legend-cell" style="background:#161b22"></div>
-              <div class="pd-legend-cell" style="background:#0e4429"></div>
-              <div class="pd-legend-cell" style="background:#006d32"></div>
-              <div class="pd-legend-cell" style="background:#26a641"></div>
-              <div class="pd-legend-cell" style="background:#39d353"></div>
+              <div class="pd-legend-cell pd-legend-cell--l0"></div>
+              <div class="pd-legend-cell pd-legend-cell--l1"></div>
+              <div class="pd-legend-cell pd-legend-cell--l2"></div>
+              <div class="pd-legend-cell pd-legend-cell--l3"></div>
+              <div class="pd-legend-cell pd-legend-cell--l4"></div>
               <span>More</span>
             </div>
           </div>

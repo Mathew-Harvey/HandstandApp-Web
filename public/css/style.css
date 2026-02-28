@@ -31,6 +31,12 @@
   --nav-bg: rgba(10,15,26,0.92);
   --alert-error-text: #fca5a5;
   --alert-success-text: #86efac;
+  /* Heatmap (progress dashboard) — dark theme */
+  --pd-heatmap-0: #161b22;
+  --pd-heatmap-1: #0e4429;
+  --pd-heatmap-2: #006d32;
+  --pd-heatmap-3: #26a641;
+  --pd-heatmap-4: #39d353;
 }
 
 /* Light mode: dark text on light backgrounds for visibility */
@@ -54,6 +60,11 @@
     --nav-bg: rgba(255,255,255,0.92);
     --alert-error-text: #b91c1c;
     --alert-success-text: #15803d;
+    --pd-heatmap-0: #ebedf0;
+    --pd-heatmap-1: #9be9a8;
+    --pd-heatmap-2: #40c463;
+    --pd-heatmap-3: #30a14e;
+    --pd-heatmap-4: #216e39;
   }
 }
 
@@ -71,6 +82,12 @@
   --muted: #64748b;
   --light: #0f172a;
   --border: rgba(0,0,0,0.08);
+  /* Heatmap — light theme */
+  --pd-heatmap-0: #ebedf0;
+  --pd-heatmap-1: #9be9a8;
+  --pd-heatmap-2: #40c463;
+  --pd-heatmap-3: #30a14e;
+  --pd-heatmap-4: #216e39;
 }
 
 html { font-size: 16px; -webkit-text-size-adjust: 100%; }

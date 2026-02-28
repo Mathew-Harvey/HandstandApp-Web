@@ -36,13 +36,9 @@ function getExerciseImages(key) {
   return EXERCISE_IMAGES[n] || [];
 }
 
-// Apply theme to document
+// Apply theme to document — always set explicitly to avoid flash
 function applyTheme(theme) {
-  if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
 }
 
 // ===== API HELPER =====
@@ -209,17 +205,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   router();
 });
 
-// Logout
+// Logout — only call API when logged in; 401 = already logged out, treat as success
 document.addEventListener('click', async (e) => {
-  if (e.target.id === 'logoutBtn') {
-    e.preventDefault();
-    try { await api('/auth/logout', { method: 'POST' }); } catch {}
-    currentUser = null;
-    // Clear toast on logout to prevent stale messages
-    const t = document.getElementById('toast');
-    if (t) t.classList.remove('toast--visible');
-    navigate('/login');
+  if (!e.target.closest('#logoutBtn')) return;
+  e.preventDefault();
+  if (currentUser) {
+    try {
+      const res = await fetch(`${window.API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      // 401 = already logged out; treat same as 200
+    } catch (_) { /* network error; still clear local state */ }
   }
+  currentUser = null;
+  const t = document.getElementById('toast');
+  if (t) t.classList.remove('toast--visible');
+  navigate('/login');
 });
 
 // ===== PAGE RENDERERS =====
@@ -936,7 +939,7 @@ async function renderLevel(num) {
 
     // Bind events
     bindTimer();
-    bindLogForms(num);
+    bindLogForms();
     bindGraduate(num);
     bindDeleteLogs();
 
