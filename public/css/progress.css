@@ -1,0 +1,556 @@
+/* ================================================================
+   Progress Dashboard — dark theme only
+   ================================================================ */
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Page shell */
+.pd-page {
+  background: #0d1117;
+  color: #e6edf3;
+  min-height: 100vh;
+  position: relative;
+}
+
+.pd-inner {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem 1rem 3rem;
+}
+
+@media (min-width: 768px) {
+  .pd-inner {
+    padding: 1.5rem 2rem 4rem;
+  }
+}
+
+/* Header */
+.pd-header {
+  margin-bottom: 1.5rem;
+}
+
+.pd-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #e6edf3;
+  margin: 0.25rem 0;
+}
+
+.pd-subtitle {
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin: 0;
+}
+
+/* Shared card base */
+.pd-card {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(88, 166, 255, 0.05);
+}
+
+/* ===== HERO STATS ROW ===== */
+.pd-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 639px) {
+  .pd-hero {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pd-hero .pd-card {
+  padding: 1rem 0.75rem;
+  text-align: center;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.pd-hero .pd-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(88, 166, 255, 0.12);
+}
+
+.pd-stat-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+  line-height: 1;
+}
+
+.pd-stat-value {
+  font-family: 'Plus Jakarta Sans', var(--heading, sans-serif);
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  color: #e6edf3;
+  text-shadow: 0 0 24px rgba(88, 166, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-stat-value--amber {
+  text-shadow: 0 0 24px rgba(240, 136, 62, 0.5);
+}
+
+.pd-stat-label {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  margin-top: 0.2rem;
+}
+
+.pd-card--streak {
+  box-shadow: 0 0 24px rgba(240, 136, 62, 0.08);
+}
+
+.pd-card--streak:hover {
+  box-shadow: 0 0 36px rgba(240, 136, 62, 0.15) !important;
+}
+
+/* Pulse streak icon when active today */
+.pd-card--active .pd-stat-icon {
+  animation: pd-flame-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pd-flame-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* ===== SECTION ANIMATIONS ===== */
+.pd-section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  margin-bottom: 28px;
+}
+
+.pd-section.pd-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pd-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin: 0 0 0.75rem;
+  border: none;
+  padding: 0;
+}
+
+.pd-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pd-heading-row .pd-heading {
+  margin: 0;
+}
+
+/* ===== HEATMAP ===== */
+.pd-heatmap-card {
+  padding: 1rem;
+}
+
+.pd-heatmap {
+  display: flex;
+  gap: 8px;
+}
+
+.pd-heatmap-days {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  gap: 3px;
+  padding-top: 22px;
+}
+
+.pd-heatmap-days span {
+  font-size: 10px;
+  color: #8b949e;
+  line-height: 13px;
+  text-align: right;
+  padding-right: 4px;
+}
+
+.pd-heatmap-scroll {
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: 4px;
+}
+
+.pd-heatmap-months {
+  position: relative;
+  height: 18px;
+  margin-bottom: 4px;
+}
+
+.pd-heatmap-months span {
+  position: absolute;
+  top: 0;
+  font-size: 10px;
+  color: #8b949e;
+  white-space: nowrap;
+}
+
+.pd-heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  grid-auto-flow: column;
+  grid-auto-columns: 13px;
+  gap: 3px;
+}
+
+.pd-hm-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: outline 0.1s;
+  outline: 1px solid transparent;
+}
+
+.pd-hm-cell:hover:not(.pd-hm-cell--empty) {
+  outline: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.pd-hm-cell--empty {
+  cursor: default;
+}
+
+.pd-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+.pd-heatmap-legend span {
+  font-size: 10px;
+  color: #8b949e;
+}
+
+.pd-legend-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+}
+
+/* Tooltip */
+.pd-tooltip {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  background: #1c2128;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.12s;
+}
+
+.pd-tooltip--show {
+  opacity: 1;
+}
+
+/* ===== VOLUME CHART ===== */
+.pd-chart-card {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.pd-chart-wrap {
+  height: 220px;
+  position: relative;
+}
+
+.pd-trend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b949e;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(48, 54, 61, 0.4);
+}
+
+.pd-trend--up {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.12);
+}
+
+/* ===== LEVEL JOURNEY ===== */
+.pd-journey-card {
+  padding: 1.25rem 1rem;
+  overflow-x: auto;
+}
+
+.pd-journey {
+  display: flex;
+  min-width: 420px;
+}
+
+.pd-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-width: 64px;
+}
+
+/* Connecting lines between steps */
+.pd-step + .pd-step::before {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: calc(-50% + 18px);
+  right: calc(50% + 18px);
+  height: 2px;
+  background: #30363d;
+}
+
+.pd-step--done + .pd-step--done::before,
+.pd-step--done + .pd-step--current::before {
+  background: #58a6ff;
+}
+
+.pd-step--current + .pd-step--future::before,
+.pd-step--future + .pd-step--future::before {
+  background: none;
+  border-top: 2px dashed #30363d;
+}
+
+/* Dot / circle */
+.pd-step-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', var(--heading, sans-serif);
+  font-weight: 800;
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 6px;
+  transition: transform 0.3s;
+}
+
+.pd-step--done .pd-step-dot {
+  background-color: #58a6ff;
+  color: #fff;
+}
+
+.pd-step--current .pd-step-dot {
+  background-color: transparent;
+  border: 2.5px solid #58a6ff;
+  color: #58a6ff;
+  animation: pd-ring-pulse 2s ease-in-out infinite;
+}
+
+.pd-step--future .pd-step-dot {
+  background-color: transparent;
+  border: 2px solid #30363d;
+  color: #484f58;
+}
+
+@keyframes pd-ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.35); }
+  50% { box-shadow: 0 0 0 8px rgba(88, 166, 255, 0); }
+}
+
+.pd-step-level {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #8b949e;
+  white-space: nowrap;
+}
+
+.pd-step-date {
+  font-size: 0.65rem;
+  color: #58a6ff;
+  min-height: 1em;
+  white-space: nowrap;
+}
+
+.pd-step--future .pd-step-date {
+  color: #484f58;
+}
+
+.pd-step--current .pd-step-date {
+  font-weight: 600;
+  color: #58a6ff;
+}
+
+/* ===== PERSONAL BESTS ===== */
+.pd-bests {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .pd-bests {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .pd-bests {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pd-best-card {
+  padding: 1rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pd-best-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 28px rgba(88, 166, 255, 0.1);
+}
+
+.pd-best-trophy {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.pd-best-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 0.25rem;
+}
+
+.pd-best-value {
+  font-family: 'Plus Jakarta Sans', var(--heading, sans-serif);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: #58a6ff;
+  text-shadow: 0 0 16px rgba(88, 166, 255, 0.35);
+  margin-bottom: 0.15rem;
+}
+
+.pd-best-date {
+  font-size: 0.7rem;
+  color: #8b949e;
+}
+
+.pd-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #8b949e;
+  font-size: 0.9rem;
+}
+
+/* ===== MOST PRACTICED BARS ===== */
+.pd-bars-card {
+  padding: 1rem 1.25rem;
+}
+
+.pd-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.5rem 0;
+}
+
+.pd-bar-row:not(:last-child) {
+  border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+}
+
+.pd-bar-rank {
+  width: 20px;
+  text-align: center;
+  font-family: 'Plus Jakarta Sans', var(--heading, sans-serif);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #484f58;
+}
+
+.pd-bar-name {
+  width: 110px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e6edf3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .pd-bar-name {
+    width: 80px;
+  }
+}
+
+.pd-bar-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(48, 54, 61, 0.5);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.pd-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #58a6ff, #3b82f6);
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pd-section.pd-visible .pd-bar-fill {
+  width: var(--w, 0%);
+}
+
+.pd-bar-row:nth-child(2) .pd-bar-fill { transition-delay: 0.1s; }
+.pd-bar-row:nth-child(3) .pd-bar-fill { transition-delay: 0.2s; }
+.pd-bar-row:nth-child(4) .pd-bar-fill { transition-delay: 0.3s; }
+.pd-bar-row:nth-child(5) .pd-bar-fill { transition-delay: 0.4s; }
+
+.pd-bar-count {
+  width: 28px;
+  text-align: right;
+  font-family: 'Plus Jakarta Sans', var(--heading, sans-serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #58a6ff;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 640px) {
+  .pd-stat-value {
+    font-size: 2.75rem;
+  }
+
+  .pd-title {
+    font-size: 1.8rem;
+  }
+}
