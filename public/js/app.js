@@ -392,7 +392,9 @@ async function openEbook() {
   try {
     const data = await api('/ebook-token');
     if (data && data.session_id) sessionId = data.session_id;
-  } catch (_) { /* backend may not have ebook-token yet */ }
+  } catch (err) {
+    console.warn('Ebook token:', err?.message || err);
+  }
   const url = getEbookUrl(sessionId);
   window.open(url, '_blank', 'noopener,noreferrer');
   toast('Opening your training guide…', true);
@@ -698,13 +700,13 @@ function showChangePasswordModal() {
               <input type="password" id="currentPassword" name="current_password" required autocomplete="current-password">
             </div>
             <div class="form-group">
-              <label for="newPassword">New Password</label>
+              <label for="changeNewPassword">New Password</label>
               <p class="auth-hint" id="changePasswordReq">At least 6 characters.</p>
-              <input type="password" id="newPassword" name="new_password" required minlength="6" autocomplete="new-password" aria-describedby="changePasswordReq">
+              <input type="password" id="changeNewPassword" name="new_password" required minlength="6" autocomplete="new-password" aria-describedby="changePasswordReq">
             </div>
             <div class="form-group">
-              <label for="confirmNewPassword">Confirm New Password</label>
-              <input type="password" id="confirmNewPassword" name="confirm_password" required minlength="6" autocomplete="new-password">
+              <label for="changeConfirmNewPassword">Confirm New Password</label>
+              <input type="password" id="changeConfirmNewPassword" name="confirm_password" required minlength="6" autocomplete="new-password">
             </div>
             <div class="alert alert-error" id="changePasswordError" style="display:none"></div>
             <div class="form-actions">

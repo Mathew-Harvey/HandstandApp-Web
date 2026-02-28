@@ -31,10 +31,10 @@
     <p class="auth-hint" id="setPasswordReq" aria-live="polite">Minimum 6 characters.</p>
     <div class="alert alert-error" id="setPasswordError" style="display:none"></div>
     <form class="auth-form" id="setPasswordForm">
-      <label for="newPassword">New password</label>
-      <input type="password" id="newPassword" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters" aria-describedby="setPasswordReq">
-      <label for="confirmNewPassword">Confirm password</label>
-      <input type="password" id="confirmNewPassword" name="confirmNewPassword" required minlength="6" autocomplete="new-password" placeholder="••••••••">
+      <label for="setNewPassword">New password</label>
+      <input type="password" id="setNewPassword" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters" aria-describedby="setPasswordReq">
+      <label for="setConfirmNewPassword">Confirm password</label>
+      <input type="password" id="setConfirmNewPassword" name="confirmNewPassword" required minlength="6" autocomplete="new-password" placeholder="••••••••">
       <button type="submit" class="btn btn-primary btn-full">Set password &amp; continue</button>
     </form>
   </div>
@@ -42,7 +42,7 @@
 <script>
   // Set your API URL here — change for production
   window.API_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:4002'
+    ? 'http://localhost:4000'
     : 'https://handstand-api.onrender.com'; // ← update after deploy
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
